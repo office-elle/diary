@@ -465,9 +465,42 @@
                 page-break-inside: avoid;
             }
         }
+
+        /* トップに戻るボタン */
+        .back-to-top-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 2000;
+            background: white;
+            color: #FF1493;
+            border: 2.5px solid #FF1493;
+            border-radius: 30px;
+            padding: 8px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255,20,147,0.2);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+        .back-to-top-btn:hover {
+            background: #FF1493;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(255,20,147,0.4);
+        }
+        @media print {
+            .back-to-top-btn { display: none !important; }
+        }
     </style>
 </head>
 <body>
+
+    <a href="https://office-elle.github.io/diary/" class="back-to-top-btn">🏠 トップへ戻る</a>
     <div class="header">
         <h1>🏥 わたしの医療手帳</h1>
         <p>救急QRコード ＋ 日々の医療記録 ＋ 家族との共有</p>
