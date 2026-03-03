@@ -249,9 +249,65 @@
                 max-width: 400px;
             }
         }
+
+        /* トップに戻るボタン */
+        .back-to-top-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2000;
+            background: white;
+            color: #FF1493;
+            border: 2.5px solid #FF1493;
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255,20,147,0.2);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+        .back-to-top-btn:hover {
+            background: #FF1493;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(255,20,147,0.4);
+        }
+        @media print {
+            .back-to-top-btn { display: none !important; }
+        }
+
+        /* 印刷・PDF用スタイル */
+        @media print {
+            body { background: white !important; padding: 0; }
+            .header {
+                background: #FF69B4 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .floating-line-btn,
+            .save-btn-container,
+            #welcomeScreen,
+            .back-to-top-btn { display: none !important; }
+            .form-screen { display: block !important; }
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #FFB6C1;
+                margin-bottom: 15px;
+            }
+            .btn { display: none !important; }
+        }
     </style>
 </head>
 <body>
+
+    <a href="https://office-elle.github.io/diary/" class="back-to-top-btn">🏠 トップへ戻る</a>
     <div class="header">
         <h1>🌸 わたしデザインノート</h1>
         <p>これからの人生を、私らしくデザイン</p>
@@ -611,7 +667,13 @@
         
         // PDF作成
         function createPDF() {
-            alert('PDF作成機能は開発中です。しばらくお待ちください。');
+            saveData();
+            const formScreen = document.getElementById('formScreen');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            formScreen.style.display = 'block';
+            welcomeScreen.style.display = 'none';
+            showToast('📄 印刷ダイアログが開きます。送信先で「PDFに保存」を選んでください');
+            setTimeout(function() { window.print(); }, 800);
         }
         
         // メール送信
