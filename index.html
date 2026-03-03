@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わたしデザインノート ＋ わたしの医療手帳</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EC 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            color: #FF1493;
+            margin-bottom: 15px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            color: #666;
+            line-height: 1.8;
+        }
+        
+        .apps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .app-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(255, 20, 147, 0.2);
+            border-color: #FFB6C1;
+        }
+        
+        .app-card .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .app-card h2 {
+            font-size: 28px;
+            color: #FF1493;
+            margin-bottom: 15px;
+        }
+        
+        .app-card p {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        
+        .app-card .features {
+            background: #FFF0F5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .app-card .features strong {
+            color: #FF1493;
+        }
+        
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 18px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-design {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+        }
+        
+        .btn-design:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 20, 147, 0.5);
+        }
+        
+        .btn-medical {
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 195, 247, 0.3);
+        }
+        
+        .btn-medical:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.5);
+        }
+        
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .apps-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .app-card {
+                padding: 30px;
+            }
+            
+            .btn {
+                font-size: 18px;
+                padding: 15px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌸 高齢者向けアプリ 2種類 🌸</h1>
+        <p>
+            あなたの人生と健康をサポートする、2つのWebアプリケーション<br>
+            使いたいアプリを選んでください
+        </p>
+    </div>
+    
+    <div class="apps-container">
+        <!-- わたしデザインノート -->
+        <div class="app-card">
+            <span class="icon">📖</span>
+            <h2>わたしデザインノート</h2>
+            <p>
+                人生100年時代のライフプランニングノート。<br>
+                過去の振り返り、未来の夢、健康管理、「もしもの時」の想いを記録します。
+            </p>
+            
+            <div class="features">
+                <strong>✨ 主な機能</strong><br>
+                • 第1章〜第4章の記入機能<br>
+                • 自動保存（1分ごと）<br>
+                • 編集機能（何度でも修正可能）<br>
+                • LINE共有・PDF保存・メール送信<br>
+                • 薄ピンク配色で温かいデザイン<br>
+                • 励ましメッセージで優しくサポート
+            </div>
+            
+            <a href="design-note-fixed.html" class="btn btn-design">
+                📝 デザインノートを開く
+            </a>
+        </div>
+        
+        <!-- わたしの医療手帳 -->
+        <div class="app-card">
+            <span class="icon">🏥</span>
+            <h2>わたしの医療手帳</h2>
+            <p>
+                救急QRコード＋母子手帳スタイルの医療記録アプリ。<br>
+                救急情報、受診記録、お薬管理、バイタル記録、家族共有機能を搭載。
+            </p>
+            
+            <div class="features">
+                <strong>✨ 主な機能</strong><br>
+                • 🆘 救急QRコード（スマホに保存）<br>
+                • 🏥 受診記録（🎤音声入力対応）<br>
+                • 💊 お薬管理・服薬チェック<br>
+                • 📊 バイタル記録・グラフ表示<br>
+                • 👨‍👩‍👧 家族共有（メール・LINE）<br>
+                • CSVダウンロード対応
+            </div>
+            
+            <a href="medical-notebook.html" class="btn btn-medical">
+                🏥 医療手帳を開く
+            </a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Made with ❤️ for 高齢者の皆様</p>
+        <p style="margin-top: 10px;">
+            サポート: support@saiki-sousai.com
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わたしデザインノート - 人生100年時代のライフプランニング</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EC 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+            line-height: 1.8;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .welcome-screen {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .welcome-screen h2 {
+            font-size: 28px;
+            color: #FF1493;
+            margin-bottom: 30px;
+        }
+        
+        .mode-selection {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        
+        .btn {
+            padding: 18px 35px;
+            font-size: 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 20, 147, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #FF1493;
+            border: 3px solid #FF1493;
+        }
+        
+        .btn-secondary:hover {
+            background: #FFF0F5;
+            transform: translateY(-3px);
+        }
+        
+        .form-screen {
+            display: none;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 5px solid #FFB6C1;
+        }
+        
+        .section h2 {
+            font-size: 24px;
+            color: #FF1493;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h3 {
+            font-size: 20px;
+            color: #FF69B4;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-left: 12px;
+            border-left: 4px solid #FFB6C1;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group input[type="email"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 18px;
+            border: 2px solid #FFB6C1;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #FF1493;
+            box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .encouragement {
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EC 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 5px solid #FFB6C1;
+            font-size: 18px;
+            line-height: 1.8;
+        }
+        
+        .save-btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .floating-line-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: #06C755;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(6, 199, 85, 0.4);
+            z-index: 1000;
+            transition: transform 0.3s;
+            border: 3px solid white;
+        }
+        
+        .floating-line-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 120px;
+            right: 30px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 999;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(400px); }
+            to { transform: translateX(0); }
+        }
+        
+        /* 通常モード：すべて表示 */
+        .normal-mode .section {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .btn {
+                padding: 15px 25px;
+                font-size: 18px;
+            }
+            
+            .mode-selection {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mode-selection .btn {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌸 わたしデザインノート</h1>
+        <p>これからの人生を、私らしくデザイン</p>
+    </div>
+    
+    <!-- ウェルカム画面 -->
+    <div id="welcomeScreen" class="welcome-screen container">
+        <h2>ようこそ！</h2>
+        <p style="font-size: 18px; line-height: 2; margin-bottom: 30px;">
+            このノートは、あなたの人生を振り返り、これからの夢や希望を描くためのものです。<br>
+            無理せず、あなたのペースで少しずつ書いていきましょう🌸
+        </p>
+        
+        <div class="mode-selection">
+            <button class="btn btn-primary" onclick="startNormalMode()">
+                📝 記入を始める
+            </button>
+        </div>
+        
+        <div style="margin-top: 40px;">
+            <button id="editExistingBtn" class="btn btn-secondary" style="display: none;" onclick="editExisting()">
+                ✏️ 保存済みを編集する
+            </button>
+        </div>
+    </div>
+    
+    <!-- フォーム画面 -->
+    <div id="formScreen" class="form-screen container normal-mode">
+        
+        <!-- 第1章：私のあゆみ -->
+        <div class="section" data-chapter="1">
+            <h2>📖 第1章：私のあゆみ</h2>
+            
+            <div class="encouragement">
+                あなたの人生を振り返りながら、ゆっくり書いていきましょう。<br>
+                今回書けないところは無理しなくていいですよ😊
+            </div>
+            
+            <h3>基本情報</h3>
+            
+            <div class="form-group">
+                <label>お名前</label>
+                <input type="text" id="name" placeholder="例：山田 花子">
+            </div>
+            
+            <div class="form-group">
+                <label>ふりがな</label>
+                <input type="text" id="furigana" placeholder="例：やまだ はなこ">
+            </div>
+            
+            <div class="form-group">
+                <label>生年月日</label>
+                <input type="date" id="birthdate">
+            </div>
+            
+            <h3>あなたの人生について（自由に書いてください）</h3>
+            
+            <div class="form-group">
+                <label>今までで一番嬉しかったことは何ですか？</label>
+                <textarea id="question1" placeholder="例：子どもが生まれた時、孫と初めて会った時..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>人生で大切にしてきた価値観は何ですか？</label>
+                <textarea id="question2" placeholder="例：家族との時間、誠実さ、挑戦する心..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>これまでの人生で学んだことは何ですか？</label>
+                <textarea id="question3" placeholder="例：諦めない心、人への感謝、健康の大切さ..."></textarea>
+            </div>
+            
+            <div class="save-btn-container">
+                <button class="btn btn-primary" onclick="saveData()">💾 ここまでを保存する</button>
+            </div>
+        </div>
+        
+        <!-- 第2章：大切な人 -->
+        <div class="section" data-chapter="2">
+            <h2>💝 第2章：大切な人</h2>
+            
+            <div class="encouragement">
+                少しずつ頑張りましょうね！あなたの大切な人のことを教えてください✨
+            </div>
+            
+            <h3>家族について</h3>
+            
+            <div class="form-group">
+                <label>家族メンバー1 - お名前</label>
+                <input type="text" id="family1Name" placeholder="例：山田 太郎">
+            </div>
+            
+            <div class="form-group">
+                <label>家族メンバー1 - 続柄</label>
+                <input type="text" id="family1Relation" placeholder="例：長男">
+            </div>
+            
+            <div class="form-group">
+                <label>家族メンバー1 - 思い出</label>
+                <textarea id="family1Memory" placeholder="例：いつも優しくて頼りになる息子です"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>家族メンバー2 - お名前</label>
+                <input type="text" id="family2Name" placeholder="例：山田 春子">
+            </div>
+            
+            <div class="form-group">
+                <label>家族メンバー2 - 続柄</label>
+                <input type="text" id="family2Relation" placeholder="例：長女">
+            </div>
+            
+            <div class="form-group">
+                <label>家族メンバー2 - 思い出</label>
+                <textarea id="family2Memory" placeholder="例：明るくて元気な娘です"></textarea>
+            </div>
+            
+            <h3>心の繋がり</h3>
+            
+            <div class="form-group">
+                <label>感謝を伝えたい人は誰ですか？</label>
+                <textarea id="gratitudePerson" placeholder="例：配偶者、子ども、友人..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>その人にどんな感謝を伝えたいですか？</label>
+                <textarea id="gratitudeMessage" placeholder="例：いつも支えてくれてありがとう..."></textarea>
+            </div>
+            
+            <div class="save-btn-container">
+                <button class="btn btn-primary" onclick="saveData()">💾 ここまでを保存する</button>
+            </div>
+        </div>
+        
+        <!-- 第3章：夢をかなえる -->
+        <div class="section" data-chapter="3">
+            <h2>⭐ 第3章：夢をかなえる</h2>
+            
+            <div class="encouragement">
+                あなたのペースで大丈夫ですよ🌸 これからやりたいことを自由に描きましょう
+            </div>
+            
+            <h3>手放すこと</h3>
+            
+            <div class="form-group">
+                <label>もう無理しなくていいことは何ですか？</label>
+                <textarea id="letGo" placeholder="例：無理な親戚付き合い、完璧主義..."></textarea>
+            </div>
+            
+            <h3>やりたいことリスト</h3>
+            
+            <div class="form-group">
+                <label>1. これからやりたいこと</label>
+                <input type="text" id="wishlist1" placeholder="例：孫と温泉旅行">
+            </div>
+            
+            <div class="form-group">
+                <label>2. これからやりたいこと</label>
+                <input type="text" id="wishlist2" placeholder="例：庭で花を育てる">
+            </div>
+            
+            <div class="form-group">
+                <label>3. これからやりたいこと</label>
+                <input type="text" id="wishlist3" placeholder="例：昔の友人に会う">
+            </div>
+            
+            <div class="form-group">
+                <label>4. これからやりたいこと</label>
+                <input type="text" id="wishlist4" placeholder="例：習字を習う">
+            </div>
+            
+            <div class="form-group">
+                <label>5. これからやりたいこと</label>
+                <input type="text" id="wishlist5" placeholder="例：家族写真を整理する">
+            </div>
+            
+            <div class="save-btn-container">
+                <button class="btn btn-primary" onclick="saveData()">💾 ここまでを保存する</button>
+            </div>
+        </div>
+        
+        <!-- 第4章：私の心と体の安心 -->
+        <div class="section" data-chapter="4">
+            <h2>💊 第4章：私の心と体の安心</h2>
+            
+            <div class="encouragement">
+                ここまで書けましたね！素晴らしいです✨ あと少しです！
+            </div>
+            
+            <h3>健康情報</h3>
+            
+            <div class="form-group">
+                <label>かかりつけ医（病院・クリニック名）</label>
+                <input type="text" id="doctor" placeholder="例：〇〇クリニック">
+            </div>
+            
+            <div class="form-group">
+                <label>現在服用しているお薬</label>
+                <textarea id="medications" placeholder="例：高血圧の薬、痛み止め..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>持病や気になる症状</label>
+                <textarea id="conditions" placeholder="例：高血圧、膝の痛み..."></textarea>
+            </div>
+            
+            <h3>もしもの時の「取扱説明書」</h3>
+            
+            <div class="form-group">
+                <label>意思決定の「伴走者」（相談相手）</label>
+                <input type="text" id="decisionSupporter" placeholder="例：長男 山田太郎">
+            </div>
+            
+            <div class="form-group">
+                <label>されると嬉しいこと</label>
+                <textarea id="happyThings" placeholder="例：手を握ってもらう、好きな音楽を聴く..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>避けてほしいこと</label>
+                <textarea id="avoidThings" placeholder="例：大声で話される、急かされる..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>機嫌が良くなる方法</label>
+                <textarea id="moodBooster" placeholder="例：好きな歌を聴く、外の景色を見る..."></textarea>
+            </div>
+            
+            <h3>生活のこだわり</h3>
+            
+            <div class="form-group">
+                <label>食事のこだわり</label>
+                <textarea id="foodPreference" placeholder="例：温かい食事が好き、味は薄めが好き..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>身だしなみのこだわり</label>
+                <textarea id="groomingPreference" placeholder="例：毎朝髪を整えたい、好きな服を着たい..."></textarea>
+            </div>
+            
+            <div class="save-btn-container">
+                <button class="btn btn-primary" onclick="saveData()">💾 ここまでを保存する</button>
+            </div>
+        </div>
+        
+        <!-- 完了ボタン -->
+        <div class="section" style="text-align: center;">
+            <h2>🎉 お疲れさまでした！</h2>
+            <div class="encouragement">
+                本当にお疲れさまでした！<br>
+                あなたの人生の素敵な記録ができましたね🌸<br><br>
+                人生には、これからも新しい出会いや心変わり、将来の計画変化がたくさんあります。<br>
+                このノートは"一度書いて終わり"ではなく、あなたの人生と一緒に育てていくものです📖<br><br>
+                2ヶ月に一度、見直して更新することをおすすめします。
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <button class="btn btn-primary" onclick="createPDF()">📄 PDFで保存</button>
+                <button class="btn btn-secondary" onclick="sendEmail()">📧 メールで送る</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- フローティングLINEボタン -->
+    <div class="floating-line-btn" onclick="shareLine()" title="LINEで共有">💬</div>
+    
+    <script>
+        const STORAGE_KEY = 'watashiDesignNote';
+        
+        // 初期化
+        window.addEventListener('DOMContentLoaded', function() {
+            checkExistingData();
+            loadFormData();
+        });
+        
+        // 既存データチェック
+        function checkExistingData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                document.getElementById('editExistingBtn').style.display = 'inline-block';
+            }
+        }
+        
+        // 通常モードで開始
+        function startNormalMode() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('formScreen').style.display = 'block';
+            
+            // すべてのセクションを表示（通常モード）
+            document.getElementById('formScreen').classList.add('normal-mode');
+            
+            showToast('📝 記入を開始しました！あなたのペースで書いていきましょう');
+        }
+        
+        // 既存データ編集
+        function editExisting() {
+            loadFormData();
+            startNormalMode();
+            showToast('✏️ 前回の内容を読み込みました。自由に編集してください');
+        }
+        
+        // データ保存
+        function saveData() {
+            const data = {
+                name: document.getElementById('name').value,
+                furigana: document.getElementById('furigana').value,
+                birthdate: document.getElementById('birthdate').value,
+                question1: document.getElementById('question1').value,
+                question2: document.getElementById('question2').value,
+                question3: document.getElementById('question3').value,
+                family1Name: document.getElementById('family1Name').value,
+                family1Relation: document.getElementById('family1Relation').value,
+                family1Memory: document.getElementById('family1Memory').value,
+                family2Name: document.getElementById('family2Name').value,
+                family2Relation: document.getElementById('family2Relation').value,
+                family2Memory: document.getElementById('family2Memory').value,
+                gratitudePerson: document.getElementById('gratitudePerson').value,
+                gratitudeMessage: document.getElementById('gratitudeMessage').value,
+                letGo: document.getElementById('letGo').value,
+                wishlist1: document.getElementById('wishlist1').value,
+                wishlist2: document.getElementById('wishlist2').value,
+                wishlist3: document.getElementById('wishlist3').value,
+                wishlist4: document.getElementById('wishlist4').value,
+                wishlist5: document.getElementById('wishlist5').value,
+                doctor: document.getElementById('doctor').value,
+                medications: document.getElementById('medications').value,
+                conditions: document.getElementById('conditions').value,
+                decisionSupporter: document.getElementById('decisionSupporter').value,
+                happyThings: document.getElementById('happyThings').value,
+                avoidThings: document.getElementById('avoidThings').value,
+                moodBooster: document.getElementById('moodBooster').value,
+                foodPreference: document.getElementById('foodPreference').value,
+                groomingPreference: document.getElementById('groomingPreference').value,
+                lastSaved: new Date().toISOString()
+            };
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            
+            const now = new Date();
+            showToast(`✅ 保存しました！（${now.getMonth()+1}月${now.getDate()}日 ${now.getHours()}時${now.getMinutes()}分）`);
+        }
+        
+        // データ読み込み
+        function loadFormData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            
+            const data = JSON.parse(saved);
+            
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element && data[key]) {
+                    element.value = data[key];
+                }
+            });
+        }
+        
+        // PDF作成
+        function createPDF() {
+            alert('PDF作成機能は開発中です。しばらくお待ちください。');
+        }
+        
+        // メール送信
+        function sendEmail() {
+            const adminEmail = 'support@saiki-sousai.com';
+            const subject = '【わたしデザインノート】記入内容の送信';
+            
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            
+            let body = '■ 基本情報\n';
+            body += `お名前: ${data.name || ''}\n`;
+            body += `ふりがな: ${data.furigana || ''}\n`;
+            body += `生年月日: ${data.birthdate || ''}\n\n`;
+            
+            body += '■ もしもの時の取扱説明書\n';
+            body += `伴走者: ${data.decisionSupporter || ''}\n`;
+            body += `されると嬉しいこと: ${data.happyThings || ''}\n`;
+            body += `避けてほしいこと: ${data.avoidThings || ''}\n\n`;
+            
+            body += '詳細はPDF版をご確認ください。';
+            
+            const mailtoUrl = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        }
+        
+        // LINE共有
+        function shareLine() {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const text = `【わたしデザインノート】\n${data.name || ''}さんのライフプランニングノートを共有します。`;
+            const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+        
+        // トースト通知
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // 自動保存
+        setInterval(() => {
+            const formScreen = document.getElementById('formScreen');
+            if (formScreen.style.display !== 'none') {
+                saveData();
+            }
+        }, 60000);
+        
+        // ページ離脱前に保存
+        window.addEventListener('beforeunload', function() {
+            const formScreen = document.getElementById('formScreen');
+            if (formScreen.style.display !== 'none') {
+                saveData();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わたしの医療手帳 - 救急QR＋医療記録アプリ</title>
+    
+    <!-- QRコード生成ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- jsPDF + html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EC 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        /* ヘッダー */
+        .header {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* タブナビゲーション */
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-bottom: 3px solid #FFB6C1;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 10px;
+            border: none;
+            background: white;
+            color: #555;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn:hover {
+            background: #FFF0F5;
+        }
+        
+        .tab-btn.active {
+            color: #FF1493;
+            border-bottom-color: #FF1493;
+            background: #FFF0F5;
+            font-weight: bold;
+        }
+        
+        /* タブコンテンツ */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.4s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* カード */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            font-size: 22px;
+            color: #FF1493;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h3 {
+            font-size: 18px;
+            color: #FF69B4;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 4px solid #FFB6C1;
+        }
+        
+        /* フォーム */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #FFB6C1;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #FF1493;
+            box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        /* ボタン */
+        .btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 20, 147, 0.4);
+        }
+        
+        .btn-emergency {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF0000 100%);
+            color: white;
+            font-size: 20px;
+        }
+        
+        .btn-emergency:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #FF1493;
+            border: 2px solid #FF1493;
+        }
+        
+        .btn-secondary:hover {
+            background: #FFF0F5;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #6BCF7F 0%, #4CAF50 100%);
+            color: white;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            color: white;
+        }
+        
+        /* QRコード表示エリア */
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            margin: 20px 0;
+            min-height: 300px;
+        }
+        
+        .emergency-summary {
+            background: linear-gradient(135deg, #FFE4E1 0%, #FFF0F5 100%);
+            border-left: 5px solid #FF0000;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .emergency-summary h3 {
+            color: #FF0000;
+            margin: 0 0 15px 0;
+            border: none;
+            padding: 0;
+        }
+        
+        .emergency-item {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .emergency-item strong {
+            color: #FF0000;
+            min-width: 120px;
+        }
+        
+        /* 受診記録タイムライン */
+        .timeline {
+            margin-top: 20px;
+        }
+        
+        .timeline-item {
+            background: #FFF0F5;
+            border-left: 4px solid #FF69B4;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .timeline-item:before {
+            content: '●';
+            position: absolute;
+            left: -11px;
+            top: 15px;
+            color: #FF1493;
+            font-size: 18px;
+        }
+        
+        .timeline-date {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-hospital {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FF1493;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            margin-top: 10px;
+        }
+        
+        /* お薬チェックリスト */
+        .medication-check {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .med-time-card {
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE4EC 100%);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #FFB6C1;
+            text-align: center;
+        }
+        
+        .med-time-card h4 {
+            color: #FF1493;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .med-time-card input[type="checkbox"] {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        
+        /* バイタルグラフ */
+        .vital-input {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+        
+        /* 家族リスト */
+        .family-list {
+            margin-top: 15px;
+        }
+        
+        .family-item {
+            background: #FFF0F5;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .family-item .name {
+            font-weight: bold;
+            color: #FF1493;
+        }
+        
+        .family-item .email {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* 音声入力ボタン */
+        .voice-btn {
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+        
+        .voice-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .voice-btn.recording {
+            animation: pulse-red 1s infinite;
+            background: #FF6B6B;
+        }
+        
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        /* トースト通知 */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(400px); }
+            to { transform: translateX(0); }
+        }
+        
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .tab-btn {
+                font-size: 14px;
+                padding: 12px 8px;
+                min-width: 100px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .vital-input {
+                grid-template-columns: 1fr;
+            }
+            
+            .medication-check {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        /* プリント用 */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .tab-nav,
+            .btn,
+            .voice-btn {
+                display: none !important;
+            }
+            
+            .tab-content {
+                display: block !important;
+            }
+            
+            .card {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 わたしの医療手帳</h1>
+        <p>救急QRコード ＋ 日々の医療記録 ＋ 家族との共有</p>
+    </div>
+    
+    <!-- タブナビゲーション -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('emergency')">🆘 救急情報</button>
+        <button class="tab-btn" onclick="switchTab('basic')">👤 基本情報</button>
+        <button class="tab-btn" onclick="switchTab('visit')">🏥 受診記録</button>
+        <button class="tab-btn" onclick="switchTab('medication')">💊 お薬</button>
+        <button class="tab-btn" onclick="switchTab('vital')">📊 バイタル</button>
+        <button class="tab-btn" onclick="switchTab('family')">👨‍👩‍👧 家族共有</button>
+    </div>
+    
+    <!-- 🆘 救急情報タブ -->
+    <div id="tab-emergency" class="tab-content active">
+        <div class="card">
+            <h2>🆘 救急QRコード</h2>
+            <p style="font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
+                救急隊員や医療従事者がこのQRコードを読み取ると、あなたの基本医療情報が即座に表示されます。<br>
+                スマホの待ち受け画面に保存しておくことをおすすめします。
+            </p>
+            <div id="qrcode"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-emergency" onclick="downloadQR()">📥 QRコードを画像で保存</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🚑 救急時サマリー</h2>
+            <div class="emergency-summary" id="emergencySummary">
+                <h3>基本情報が未登録です</h3>
+                <p>「👤 基本情報」タブから情報を入力してください。</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 👤 基本情報タブ -->
+    <div id="tab-basic" class="tab-content">
+        <div class="card">
+            <h2>👤 基本情報</h2>
+            
+            <div class="form-group">
+                <label>お名前 <span style="color: red;">*</span></label>
+                <input type="text" id="basicName" placeholder="例：山田 花子">
+            </div>
+            
+            <div class="form-group">
+                <label>ふりがな</label>
+                <input type="text" id="basicFurigana" placeholder="例：やまだ はなこ">
+            </div>
+            
+            <div class="form-group">
+                <label>生年月日 <span style="color: red;">*</span></label>
+                <input type="date" id="basicBirthdate">
+            </div>
+            
+            <div class="form-group">
+                <label>血液型</label>
+                <select id="basicBloodType">
+                    <option value="">選択してください</option>
+                    <option value="A">A型</option>
+                    <option value="B">B型</option>
+                    <option value="O">O型</option>
+                    <option value="AB">AB型</option>
+                    <option value="不明">不明</option>
+                </select>
+            </div>
+            
+            <h3>緊急連絡先</h3>
+            
+            <div class="form-group">
+                <label>緊急連絡先氏名 <span style="color: red;">*</span></label>
+                <input type="text" id="emergencyContactName" placeholder="例：山田 太郎（長男）">
+            </div>
+            
+            <div class="form-group">
+                <label>緊急連絡先電話番号 <span style="color: red;">*</span></label>
+                <input type="tel" id="emergencyContactPhone" placeholder="例：090-1234-5678">
+            </div>
+            
+            <h3>かかりつけ医</h3>
+            
+            <div class="form-group">
+                <label>病院・クリニック名</label>
+                <input type="text" id="hospitalName" placeholder="例：〇〇クリニック">
+            </div>
+            
+            <div class="form-group">
+                <label>診療科</label>
+                <input type="text" id="hospitalDepartment" placeholder="例：内科">
+            </div>
+            
+            <div class="form-group">
+                <label>電話番号</label>
+                <input type="tel" id="hospitalPhone" placeholder="例：03-1234-5678">
+            </div>
+            
+            <h3>既往歴（過去の病気・手術）</h3>
+            
+            <div class="form-group">
+                <textarea id="medicalHistory" placeholder="例：
+・2020年 高血圧症（降圧剤服用中）
+・2018年 白内障手術（右目）
+・2015年 骨折（大腿骨）"></textarea>
+            </div>
+            
+            <h3>アレルギー</h3>
+            
+            <div class="form-group">
+                <textarea id="allergies" placeholder="例：
+・ペニシリン系抗生物質
+・そば
+・花粉症"></textarea>
+            </div>
+            
+            <h3>現在の服用薬</h3>
+            
+            <div class="form-group">
+                <textarea id="currentMedications" placeholder="例：
+・アムロジピン 5mg（朝1錠）高血圧
+・メトホルミン 500mg（朝・夕各1錠）糖尿病"></textarea>
+            </div>
+            
+            <h3>医療機器・補助具</h3>
+            
+            <div class="form-group">
+                <textarea id="medicalDevices" placeholder="例：
+・補聴器（両耳）
+・歩行器
+・ペースメーカー"></textarea>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="saveBasicInfo()">💾 基本情報を保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 🏥 受診記録タブ -->
+    <div id="tab-visit" class="tab-content">
+        <div class="card">
+            <h2>🏥 受診記録を追加</h2>
+            
+            <div class="form-group">
+                <label>受診日 <span style="color: red;">*</span></label>
+                <input type="date" id="visitDate">
+            </div>
+            
+            <div class="form-group">
+                <label>病院・クリニック名 <span style="color: red;">*</span></label>
+                <input type="text" id="visitHospital" placeholder="例：〇〇総合病院">
+            </div>
+            
+            <div class="form-group">
+                <label>診療科</label>
+                <input type="text" id="visitDepartment" placeholder="例：循環器内科">
+            </div>
+            
+            <div class="form-group">
+                <label>医師の説明・診断内容
+                    <button class="voice-btn" onclick="startVisitVoice()" title="音声入力">🎤</button>
+                </label>
+                <textarea id="visitNotes" placeholder="医師から聞いた説明をここに記録してください。音声入力も使えます。
+
+例：
+・血圧が少し高めなので、薬を調整しました
+・次回は1ヶ月後に血液検査をします
+・塩分を控えめにしてください"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>処方薬</label>
+                <textarea id="visitPrescription" placeholder="例：
+・アムロジピン 5mg 1日1回朝食後 28日分"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>次回予約日</label>
+                <input type="date" id="visitNextDate">
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-success" onclick="addVisitRecord()">➕ 受診記録を追加</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📅 受診記録一覧</h2>
+            <div class="timeline" id="visitTimeline">
+                <p style="color: #999; text-align: center;">まだ受診記録がありません</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 💊 お薬タブ -->
+    <div id="tab-medication" class="tab-content">
+        <div class="card">
+            <h2>💊 現在の服用薬</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                ※「👤 基本情報」タブの「現在の服用薬」から編集してください
+            </p>
+            <div id="medicationList" style="background: #FFF0F5; padding: 15px; border-radius: 10px; white-space: pre-wrap; line-height: 1.8;">
+                基本情報から登録してください
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>✅ 今日の服薬チェック</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                日付: <span id="medicationCheckDate"></span>
+            </p>
+            <div class="medication-check">
+                <div class="med-time-card">
+                    <h4>🌅 朝食後</h4>
+                    <input type="checkbox" id="medMorning" onchange="saveMedicationCheck()">
+                </div>
+                <div class="med-time-card">
+                    <h4>🌞 昼食後</h4>
+                    <input type="checkbox" id="medNoon" onchange="saveMedicationCheck()">
+                </div>
+                <div class="med-time-card">
+                    <h4>🌙 夕食後</h4>
+                    <input type="checkbox" id="medEvening" onchange="saveMedicationCheck()">
+                </div>
+                <div class="med-time-card">
+                    <h4>😴 就寝前</h4>
+                    <input type="checkbox" id="medBedtime" onchange="saveMedicationCheck()">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 📊 バイタルタブ -->
+    <div id="tab-vital" class="tab-content">
+        <div class="card">
+            <h2>📊 バイタル記録を追加</h2>
+            
+            <div class="vital-input">
+                <div class="form-group">
+                    <label>測定日時</label>
+                    <input type="datetime-local" id="vitalDate">
+                </div>
+                
+                <div class="form-group">
+                    <label>血圧（上） mmHg</label>
+                    <input type="number" id="vitalSystolic" placeholder="例：120">
+                </div>
+                
+                <div class="form-group">
+                    <label>血圧（下） mmHg</label>
+                    <input type="number" id="vitalDiastolic" placeholder="例：80">
+                </div>
+                
+                <div class="form-group">
+                    <label>脈拍 bpm</label>
+                    <input type="number" id="vitalPulse" placeholder="例：72">
+                </div>
+                
+                <div class="form-group">
+                    <label>体温 ℃</label>
+                    <input type="number" step="0.1" id="vitalTemp" placeholder="例：36.5">
+                </div>
+                
+                <div class="form-group">
+                    <label>体重 kg</label>
+                    <input type="number" step="0.1" id="vitalWeight" placeholder="例：60.5">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-info" onclick="addVitalRecord()">➕ バイタルを記録</button>
+                <button class="btn btn-secondary" onclick="downloadVitalCSV()">📥 CSVダウンロード</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📈 血圧グラフ</h2>
+            <div class="chart-container">
+                <canvas id="bpChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🌡️ 体温・脈拍グラフ</h2>
+            <div class="chart-container">
+                <canvas id="tempPulseChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 👨‍👩‍👧 家族共有タブ -->
+    <div id="tab-family" class="tab-content">
+        <div class="card">
+            <h2>👨‍👩‍👧 家族の登録</h2>
+            
+            <div class="form-group">
+                <label>続柄・関係</label>
+                <input type="text" id="familyRelation" placeholder="例：長男">
+            </div>
+            
+            <div class="form-group">
+                <label>お名前</label>
+                <input type="text" id="familyName" placeholder="例：山田 太郎">
+            </div>
+            
+            <div class="form-group">
+                <label>メールアドレス</label>
+                <input type="email" id="familyEmail" placeholder="例：taro@example.com">
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="addFamily()">➕ 家族を追加</button>
+            </div>
+            
+            <h3>登録済み家族</h3>
+            <div class="family-list" id="familyList">
+                <p style="color: #999; text-align: center;">まだ家族が登録されていません</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📤 家族への共有</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-success" onclick="sendEmailToFamily()">📧 受診記録をメール送信</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-info" onclick="createPDF()">📄 PDFを作成</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn" onclick="shareLINE()" style="background: #06C755; color: white;">💬 LINEで共有</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // LocalStorageキー
+        const STORAGE_KEY = 'medicalNotebook';
+        
+        // データ構造
+        let data = {
+            basic: {},
+            visits: [],
+            vitals: [],
+            families: [],
+            medicationChecks: {}
+        };
+        
+        // 初期化
+        window.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            initCurrentDateTime();
+            updateMedicationCheckDate();
+            loadMedicationCheck();
+            renderEmergencySummary();
+            renderVisitTimeline();
+            renderFamilyList();
+            updateMedicationList();
+            renderVitalCharts();
+            generateQRCode();
+            
+            // 自動保存
+            setInterval(autoSave, 60000);
+        });
+        
+        // データ読み込み
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                data = JSON.parse(saved);
+            }
+        }
+        
+        // データ保存
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        
+        // 自動保存
+        function autoSave() {
+            saveData();
+        }
+        
+        // タブ切り替え
+        function switchTab(tabName) {
+            // すべてのタブを非表示
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 選択されたタブを表示
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // バイタルタブの場合はグラフを更新
+            if (tabName === 'vital') {
+                renderVitalCharts();
+            }
+        }
+        
+        // 現在日時を入力欄にセット
+        function initCurrentDateTime() {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().slice(0, 5);
+            
+            if (document.getElementById('visitDate')) {
+                document.getElementById('visitDate').value = dateStr;
+            }
+            if (document.getElementById('vitalDate')) {
+                document.getElementById('vitalDate').value = dateStr + 'T' + timeStr;
+            }
+        }
+        
+        // ========== 基本情報 ==========
+        
+        function saveBasicInfo() {
+            data.basic = {
+                name: document.getElementById('basicName').value,
+                furigana: document.getElementById('basicFurigana').value,
+                birthdate: document.getElementById('basicBirthdate').value,
+                bloodType: document.getElementById('basicBloodType').value,
+                emergencyContactName: document.getElementById('emergencyContactName').value,
+                emergencyContactPhone: document.getElementById('emergencyContactPhone').value,
+                hospitalName: document.getElementById('hospitalName').value,
+                hospitalDepartment: document.getElementById('hospitalDepartment').value,
+                hospitalPhone: document.getElementById('hospitalPhone').value,
+                medicalHistory: document.getElementById('medicalHistory').value,
+                allergies: document.getElementById('allergies').value,
+                currentMedications: document.getElementById('currentMedications').value,
+                medicalDevices: document.getElementById('medicalDevices').value
+            };
+            
+            saveData();
+            renderEmergencySummary();
+            updateMedicationList();
+            generateQRCode();
+            showToast('✅ 基本情報を保存しました');
+        }
+        
+        // 基本情報を入力欄に反映
+        function loadBasicInfo() {
+            if (data.basic.name) {
+                document.getElementById('basicName').value = data.basic.name || '';
+                document.getElementById('basicFurigana').value = data.basic.furigana || '';
+                document.getElementById('basicBirthdate').value = data.basic.birthdate || '';
+                document.getElementById('basicBloodType').value = data.basic.bloodType || '';
+                document.getElementById('emergencyContactName').value = data.basic.emergencyContactName || '';
+                document.getElementById('emergencyContactPhone').value = data.basic.emergencyContactPhone || '';
+                document.getElementById('hospitalName').value = data.basic.hospitalName || '';
+                document.getElementById('hospitalDepartment').value = data.basic.hospitalDepartment || '';
+                document.getElementById('hospitalPhone').value = data.basic.hospitalPhone || '';
+                document.getElementById('medicalHistory').value = data.basic.medicalHistory || '';
+                document.getElementById('allergies').value = data.basic.allergies || '';
+                document.getElementById('currentMedications').value = data.basic.currentMedications || '';
+                document.getElementById('medicalDevices').value = data.basic.medicalDevices || '';
+            }
+        }
+        
+        // 救急サマリー表示
+        function renderEmergencySummary() {
+            const container = document.getElementById('emergencySummary');
+            
+            if (!data.basic.name) {
+                container.innerHTML = `
+                    <h3>基本情報が未登録です</h3>
+                    <p>「👤 基本情報」タブから情報を入力してください。</p>
+                `;
+                return;
+            }
+            
+            const age = data.basic.birthdate ? calculateAge(data.basic.birthdate) : '不明';
+            
+            let html = '<h3>🚑 救急隊員・医療従事者の方へ</h3>';
+            
+            html += `<div class="emergency-item"><strong>氏名:</strong> <span>${data.basic.name || '未登録'}</span></div>`;
+            html += `<div class="emergency-item"><strong>年齢:</strong> <span>${age}歳</span></div>`;
+            html += `<div class="emergency-item"><strong>血液型:</strong> <span>${data.basic.bloodType || '不明'}</span></div>`;
+            html += `<div class="emergency-item"><strong>緊急連絡先:</strong> <span>${data.basic.emergencyContactName || '未登録'} (${data.basic.emergencyContactPhone || '-'})</span></div>`;
+            
+            if (data.basic.allergies) {
+                html += `<div class="emergency-item" style="border: 2px solid #FF0000;"><strong style="color: #FF0000;">⚠️ アレルギー:</strong> <span style="white-space: pre-wrap;">${data.basic.allergies}</span></div>`;
+            }
+            
+            if (data.basic.currentMedications) {
+                html += `<div class="emergency-item"><strong>服用薬:</strong> <span style="white-space: pre-wrap; font-size: 14px;">${data.basic.currentMedications}</span></div>`;
+            }
+            
+            if (data.basic.medicalHistory) {
+                html += `<div class="emergency-item"><strong>既往歴:</strong> <span style="white-space: pre-wrap; font-size: 14px;">${data.basic.medicalHistory}</span></div>`;
+            }
+            
+            if (data.basic.hospitalName) {
+                html += `<div class="emergency-item"><strong>かかりつけ医:</strong> <span>${data.basic.hospitalName} ${data.basic.hospitalDepartment || ''} (${data.basic.hospitalPhone || '-'})</span></div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // 年齢計算
+        function calculateAge(birthdate) {
+            const birth = new Date(birthdate);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+        
+        // QRコード生成
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            if (!data.basic.name) {
+                qrContainer.innerHTML = '<p style="color: #999;">基本情報を登録すると、QRコードが生成されます</p>';
+                return;
+            }
+            
+            // 救急情報をJSON形式で
+            const emergencyData = {
+                name: data.basic.name,
+                birthdate: data.basic.birthdate,
+                bloodType: data.basic.bloodType,
+                emergencyContact: data.basic.emergencyContactName + ' (' + data.basic.emergencyContactPhone + ')',
+                allergies: data.basic.allergies,
+                medications: data.basic.currentMedications,
+                history: data.basic.medicalHistory,
+                hospital: data.basic.hospitalName + ' ' + (data.basic.hospitalDepartment || '') + ' (' + (data.basic.hospitalPhone || '') + ')'
+            };
+            
+            const qrText = JSON.stringify(emergencyData, null, 2);
+            
+            new QRCode(qrContainer, {
+                text: qrText,
+                width: 256,
+                height: 256,
+                colorDark: '#FF1493',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+        
+        // QRコード画像ダウンロード
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) {
+                alert('QRコードが生成されていません。基本情報を登録してください。');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = '救急QRコード.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            showToast('✅ QRコードを保存しました');
+        }
+        
+        // ========== 受診記録 ==========
+        
+        function addVisitRecord() {
+            const date = document.getElementById('visitDate').value;
+            const hospital = document.getElementById('visitHospital').value;
+            const department = document.getElementById('visitDepartment').value;
+            const notes = document.getElementById('visitNotes').value;
+            const prescription = document.getElementById('visitPrescription').value;
+            const nextDate = document.getElementById('visitNextDate').value;
+            
+            if (!date || !hospital) {
+                alert('受診日と病院名は必須です');
+                return;
+            }
+            
+            const record = {
+                id: Date.now(),
+                date: date,
+                hospital: hospital,
+                department: department,
+                notes: notes,
+                prescription: prescription,
+                nextDate: nextDate,
+                createdAt: new Date().toISOString()
+            };
+            
+            data.visits.unshift(record);
+            saveData();
+            renderVisitTimeline();
+            
+            // フォームクリア
+            document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('visitHospital').value = '';
+            document.getElementById('visitDepartment').value = '';
+            document.getElementById('visitNotes').value = '';
+            document.getElementById('visitPrescription').value = '';
+            document.getElementById('visitNextDate').value = '';
+            
+            showToast('✅ 受診記録を追加しました');
+        }
+        
+        function renderVisitTimeline() {
+            const container = document.getElementById('visitTimeline');
+            
+            if (data.visits.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">まだ受診記録がありません</p>';
+                return;
+            }
+            
+            let html = '';
+            data.visits.forEach(visit => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-date">📅 ${formatDate(visit.date)}</div>
+                        <div class="timeline-hospital">🏥 ${visit.hospital} ${visit.department ? '（' + visit.department + '）' : ''}</div>
+                        ${visit.notes ? `<div class="timeline-content"><strong>診断内容:</strong><br>${visit.notes.replace(/\n/g, '<br>')}</div>` : ''}
+                        ${visit.prescription ? `<div class="timeline-content"><strong>💊 処方薬:</strong><br>${visit.prescription.replace(/\n/g, '<br>')}</div>` : ''}
+                        ${visit.nextDate ? `<div class="timeline-content"><strong>次回予約:</strong> ${formatDate(visit.nextDate)}</div>` : ''}
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-secondary" style="font-size: 14px; padding: 8px 15px;" onclick="deleteVisit(${visit.id})">🗑️ 削除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function deleteVisit(id) {
+            if (confirm('この受診記録を削除しますか？')) {
+                data.visits = data.visits.filter(v => v.id !== id);
+                saveData();
+                renderVisitTimeline();
+                showToast('🗑️ 削除しました');
+            }
+        }
+        
+        // 音声入力（受診記録）
+        function startVisitVoice() {
+            const field = document.getElementById('visitNotes');
+            startVoiceInput(field);
+        }
+        
+        // 音声入力共通関数
+        function startVoiceInput(field) {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('お使いのブラウザは音声入力に対応していません。Chrome、Edge、Safariをお試しください。');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ja-JP';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = function() {
+                event.target.classList.add('recording');
+                showToast('🎤 音声入力を開始しました。話してください...');
+            };
+            
+            recognition.onresult = function(e) {
+                const transcript = e.results[0][0].transcript;
+                if (field.value.trim() !== '') {
+                    field.value += '\n' + transcript;
+                } else {
+                    field.value = transcript;
+                }
+                showToast('✅ 音声を認識しました');
+            };
+            
+            recognition.onerror = function(e) {
+                showToast('❌ 音声認識エラー: ' + e.error);
+            };
+            
+            recognition.onend = function() {
+                event.target.classList.remove('recording');
+            };
+            
+            recognition.start();
+        }
+        
+        // ========== お薬 ==========
+        
+        function updateMedicationList() {
+            const container = document.getElementById('medicationList');
+            if (data.basic.currentMedications) {
+                container.textContent = data.basic.currentMedications;
+            } else {
+                container.textContent = '基本情報から登録してください';
+            }
+        }
+        
+        function updateMedicationCheckDate() {
+            const today = new Date();
+            const dateStr = today.getFullYear() + '年' + (today.getMonth() + 1) + '月' + today.getDate() + '日';
+            document.getElementById('medicationCheckDate').textContent = dateStr;
+        }
+        
+        function saveMedicationCheck() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            data.medicationChecks[today] = {
+                morning: document.getElementById('medMorning').checked,
+                noon: document.getElementById('medNoon').checked,
+                evening: document.getElementById('medEvening').checked,
+                bedtime: document.getElementById('medBedtime').checked
+            };
+            
+            saveData();
+        }
+        
+        function loadMedicationCheck() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (data.medicationChecks[today]) {
+                document.getElementById('medMorning').checked = data.medicationChecks[today].morning || false;
+                document.getElementById('medNoon').checked = data.medicationChecks[today].noon || false;
+                document.getElementById('medEvening').checked = data.medicationChecks[today].evening || false;
+                document.getElementById('medBedtime').checked = data.medicationChecks[today].bedtime || false;
+            }
+        }
+        
+        // ========== バイタル ==========
+        
+        function addVitalRecord() {
+            const date = document.getElementById('vitalDate').value;
+            const systolic = document.getElementById('vitalSystolic').value;
+            const diastolic = document.getElementById('vitalDiastolic').value;
+            const pulse = document.getElementById('vitalPulse').value;
+            const temp = document.getElementById('vitalTemp').value;
+            const weight = document.getElementById('vitalWeight').value;
+            
+            if (!date) {
+                alert('測定日時を入力してください');
+                return;
+            }
+            
+            const record = {
+                id: Date.now(),
+                date: date,
+                systolic: systolic ? parseFloat(systolic) : null,
+                diastolic: diastolic ? parseFloat(diastolic) : null,
+                pulse: pulse ? parseFloat(pulse) : null,
+                temp: temp ? parseFloat(temp) : null,
+                weight: weight ? parseFloat(weight) : null
+            };
+            
+            data.vitals.push(record);
+            data.vitals.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            saveData();
+            renderVitalCharts();
+            
+            // フォームクリア
+            document.getElementById('vitalSystolic').value = '';
+            document.getElementById('vitalDiastolic').value = '';
+            document.getElementById('vitalPulse').value = '';
+            document.getElementById('vitalTemp').value = '';
+            document.getElementById('vitalWeight').value = '';
+            
+            showToast('✅ バイタルを記録しました');
+        }
+        
+        let bpChart = null;
+        let tempPulseChart = null;
+        
+        function renderVitalCharts() {
+            if (data.vitals.length === 0) return;
+            
+            const labels = data.vitals.map(v => formatDate(v.date.split('T')[0]));
+            const systolicData = data.vitals.map(v => v.systolic);
+            const diastolicData = data.vitals.map(v => v.diastolic);
+            const pulseData = data.vitals.map(v => v.pulse);
+            const tempData = data.vitals.map(v => v.temp);
+            
+            // 血圧グラフ
+            const bpCtx = document.getElementById('bpChart').getContext('2d');
+            
+            if (bpChart) {
+                bpChart.destroy();
+            }
+            
+            bpChart = new Chart(bpCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '収縮期血圧（上）',
+                            data: systolicData,
+                            borderColor: '#FF6B6B',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: '拡張期血圧（下）',
+                            data: diastolicData,
+                            borderColor: '#4FC3F7',
+                            backgroundColor: 'rgba(79, 195, 247, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: '高血圧ライン（140）',
+                            data: Array(labels.length).fill(140),
+                            borderColor: '#FF0000',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 60,
+                            max: 180
+                        }
+                    }
+                }
+            });
+            
+            // 体温・脈拍グラフ
+            const tempPulseCtx = document.getElementById('tempPulseChart').getContext('2d');
+            
+            if (tempPulseChart) {
+                tempPulseChart.destroy();
+            }
+            
+            tempPulseChart = new Chart(tempPulseCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '体温（℃）',
+                            data: tempData,
+                            borderColor: '#FF69B4',
+                            backgroundColor: 'rgba(255, 105, 180, 0.1)',
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '脈拍（bpm）',
+                            data: pulseData,
+                            borderColor: '#6BCF7F',
+                            backgroundColor: 'rgba(107, 207, 127, 0.1)',
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '体温（℃）'
+                            },
+                            min: 35,
+                            max: 39
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '脈拍（bpm）'
+                            },
+                            min: 40,
+                            max: 120,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function downloadVitalCSV() {
+            if (data.vitals.length === 0) {
+                alert('記録されたバイタルデータがありません');
+                return;
+            }
+            
+            let csv = '測定日時,血圧（上）,血圧（下）,脈拍,体温,体重\n';
+            data.vitals.forEach(v => {
+                csv += `${v.date},${v.systolic || ''},${v.diastolic || ''},${v.pulse || ''},${v.temp || ''},${v.weight || ''}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'バイタル記録.csv';
+            link.click();
+            
+            showToast('✅ CSVをダウンロードしました');
+        }
+        
+        // ========== 家族共有 ==========
+        
+        function addFamily() {
+            const relation = document.getElementById('familyRelation').value;
+            const name = document.getElementById('familyName').value;
+            const email = document.getElementById('familyEmail').value;
+            
+            if (!relation || !name || !email) {
+                alert('すべての項目を入力してください');
+                return;
+            }
+            
+            const family = {
+                id: Date.now(),
+                relation: relation,
+                name: name,
+                email: email
+            };
+            
+            data.families.push(family);
+            saveData();
+            renderFamilyList();
+            
+            // フォームクリア
+            document.getElementById('familyRelation').value = '';
+            document.getElementById('familyName').value = '';
+            document.getElementById('familyEmail').value = '';
+            
+            showToast('✅ 家族を追加しました');
+        }
+        
+        function renderFamilyList() {
+            const container = document.getElementById('familyList');
+            
+            if (data.families.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">まだ家族が登録されていません</p>';
+                return;
+            }
+            
+            let html = '';
+            data.families.forEach(family => {
+                html += `
+                    <div class="family-item">
+                        <div>
+                            <div class="name">${family.relation}: ${family.name}</div>
+                            <div class="email">${family.email}</div>
+                        </div>
+                        <button class="btn btn-secondary" style="font-size: 14px; padding: 8px 15px;" onclick="deleteFamily(${family.id})">🗑️ 削除</button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function deleteFamily(id) {
+            if (confirm('この家族を削除しますか？')) {
+                data.families = data.families.filter(f => f.id !== id);
+                saveData();
+                renderFamilyList();
+                showToast('🗑️ 削除しました');
+            }
+        }
+        
+        function sendEmailToFamily() {
+            if (data.families.length === 0) {
+                alert('家族を登録してください');
+                return;
+            }
+            
+            const emails = data.families.map(f => f.email).join(',');
+            const subject = '【わたしの医療手帳】受診記録をお知らせします';
+            
+            let body = `${data.basic.name || ''}さんの医療記録をお知らせします。\n\n`;
+            body += `=== 最新の受診記録 ===\n\n`;
+            
+            if (data.visits.length > 0) {
+                const latestVisit = data.visits[0];
+                body += `受診日: ${formatDate(latestVisit.date)}\n`;
+                body += `病院: ${latestVisit.hospital}\n`;
+                body += `診療科: ${latestVisit.department || '-'}\n\n`;
+                body += `診断内容:\n${latestVisit.notes || '-'}\n\n`;
+                body += `処方薬:\n${latestVisit.prescription || '-'}\n\n`;
+                if (latestVisit.nextDate) {
+                    body += `次回予約: ${formatDate(latestVisit.nextDate)}\n`;
+                }
+            } else {
+                body += 'まだ受診記録がありません\n';
+            }
+            
+            body += `\n詳細は「わたしの医療手帳」アプリでご確認ください。`;
+            
+            const mailtoUrl = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        }
+        
+        function createPDF() {
+            alert('PDF作成機能は開発中です。しばらくお待ちください。');
+            // TODO: jsPDFを使ったPDF作成実装
+        }
+        
+        function shareLINE() {
+            if (data.visits.length === 0) {
+                alert('共有する受診記録がありません');
+                return;
+            }
+            
+            const latestVisit = data.visits[0];
+            const text = `【医療手帳】\n${formatDate(latestVisit.date)} ${latestVisit.hospital} に受診しました。\n診断内容: ${latestVisit.notes ? latestVisit.notes.substring(0, 50) + '...' : '-'}`;
+            const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+        
+        // ========== ユーティリティ ==========
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // ページ離脱前に保存
+        window.addEventListener('beforeunload', function() {
+            saveData();
+        });
+        
+        // 初回ロード時に基本情報を反映
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(loadBasicInfo, 100);
+        });
+    </script>
+</body>
+</html>
